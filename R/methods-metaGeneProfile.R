@@ -426,7 +426,7 @@ setMethod("metaGeneProfile", signature(object="GRanges"),
                 if (is.na(group)) {
                     if (split == TRUE) {
                         if(nomap == FALSE){
-                            df <- df[df$Position != 5, ]
+                            df <- df[df$location != "NO",]
                             df$location <- factor(df$location,
                                 levels = c("UTR5", "CDS", "UTR3"))
                         }
@@ -509,7 +509,7 @@ setMethod("metaGeneProfile", signature(object="GRanges"),
                 if (is.na(group)) {
                     if (split == TRUE) {
                         if(nomap == FALSE){
-                            df <- df[df$Position != 5, ]
+                            df <- df[df$location != "NO",]
                             df$location <- factor(df$location,
                                 levels = c("UTR5", "CDS", "UTR3"))
                         }
