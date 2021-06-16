@@ -1,0 +1,34 @@
+Package: cliProfiler
+Type: Package
+Title: A package for the CLIP data visualization
+Version: 0.99.0
+Date: 2021-02-01
+Authors@R: c(person(given = "You",
+                    family = "Zhou",
+                    role = c("aut", "cre"),
+                    email = "youzhoulearning@gmail.com",
+                    comment = c(ORCID = "0000-0003-1755-9073")),
+             person(given = "Kathi",
+                    family = "Zarnack",
+                    role = c("aut"),
+                    email = "kathi.zarnack@bmls.de",
+                    comment = c(ORCID = "0000-0003-3527-3378")))
+Description: An easy and fast way to visualize and profile the high-throughput 
+    IP data. This package generates the meta gene profile and other profiles. 
+    These profiles could provide valuable information for understanding the 
+    IP experiment results.
+License: Artistic-2.0
+VignetteBuilder:
+    knitr
+Encoding: UTF-8
+LazyData: TRUE
+URL: https://github.com/Codezy99/cliProfiler
+BugReports: https://github.com/Codezy99/cliProfiler/issues
+biocViews: Sequencing, ChIPSeq, Visualization, Epigenetics, Genetics
+RoxygenNote: 7.1.1
+Imports: 
+    dplyr, rtracklayer, GenomicRanges, ggplot2, BSgenome, Biostrings, utils
+Depends: 
+    S4Vectors, methods, R (>= 4.0.0)
+Suggests: 
+    knitr, rmarkdown, bookdown, testthat, BiocStyle

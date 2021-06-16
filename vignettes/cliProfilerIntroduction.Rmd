@@ -1,0 +1,412 @@
+---
+title: "cliProfiler Vignettes"
+author:
+- name: "You Zhou"
+  affiliation: 
+  - Buchmann Institute for Molecular Life Sciences, Frankfurt am Main, Germany
+- name: "Kathi Zarnack"
+  affiliation: 
+  - Buchmann Institute for Molecular Life Sciences, Frankfurt am Main, Germany
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+    BiocStyle::html_document:
+        toc_float: true
+    BiocStyle::pdf_document: default
+package: cliProfiler
+vignette: |
+    %\VignetteIndexEntry{cliProfiler Vignettes}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+---
+
+```{r style, echo=FALSE, results='asis'}
+BiocStyle::markdown()
+```
+
+# Introduction
+
+Immunoprecipitation (IP) is the technique of precipitating a protein antigen 
+out of solution using an antibody that specifically binds to that particular 
+protein. This technique is widely used in the biological field. With the advent 
+of Next Generation Sequencing (NGS) technology, IP has also been introduced 
+into the high-throughput experiments, e.g. iCLIP, MeRIP and eCLIP. In order to 
+make it easier for the researchers to visualize their high-throughput IP 
+experiment data (peaks), we develop `r Biocpkg("cliProfiler")` package. The 
+`r Biocpkg("cliProfiler")` includes seven functions which allow users easily 
+make different profile plots.
+
+The `r Biocpkg("cliProfiler")` package is available at
+[https://bioconductor.org](https://bioconductor.org) and can be
+installed via `BiocManager::install`:
+
+```{r BiocManager, eval=FALSE}
+if (!require("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install("cliProfiler")
+```
+
+A package only needs to be installed once. Load the package into an
+R session with
+
+```{r initialize, results="hide", warning=FALSE, message=FALSE}
+library(cliProfiler)
+```
+
+# Data and Annotation Requirement 
+The input data for using all the functions in `r Biocpkg("cliProfiler")` should 
+be stored in the **GRanges** objects. The **GRanges** is an S4 class which 
+defined by `r Biocpkg("GenomicRanges")`. The GRanges class is a container for 
+the genomic locations and their associated annotations. For more information 
+about GRanges objects please check `r Biocpkg("GenomicRanges")` package.
+
+The annotation file that required by functions `exonProfile`, 
+`geneTypeProfile`, `intronProfile`, `spliceSiteProfile` and `metaGeneProfile` 
+should be in the `gff3` format and download from 
+[https://www.gencodegenes.org/](https://www.gencodegenes.org/). So these five 
+functions can now only be used for *Human* and *Mouse*.
+
+# metaGeneProfile
+`metaGeneProfile` outputs the meta plot which shows the location of peaks 
+within the genomic region. This meta plot is widely used in the epigenetics 
+field, especially for N6-Methyladenosine (m6A). The input of this function 
+should be a GRanges object like this:
+
+```{r}
+## For testing all the function we need to first load the test data
+testpath <- system.file("extdata", package = "cliProfiler")
+test_gff3 <- file.path(testpath, "annotation_test.gff3")
+test <- readRDS(file.path(testpath, "test.rds"))
+## Show an example of GRanges objects
+test
+```
+
+The input annotation file of `metaGeneProfile` should be in a `gff3` format 
+and download from [Gencode](https://www.gencodegenes.org/). The user needs to 
+input the GRanges object and the path to the `gff3` file for easy use.
+The output of `metaGeneProfile` is a `list` objects. The `List` one contains 
+the GRanges objects with the calculation result which can be used in different 
+ways by the user later.
+
+```{r}
+meta <- metaGeneProfile(object = test, annotation = test_gff3)
+meta[[1]]
+```
+
+Here is an explanation of the metaData columns of the output GRanges objects:  
+    
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* __location__ Which genomic region this peak belongs to.  
+* __Gene ID__ Which gene this peak belongs to.  
+* __Position__ The relative position of each peak. This value close to 0 means 
+this peak located close to the 5' end of the genomic feature. The position 
+value close to one means the peak close to the 3' end of the genomic feature. 
+Value 5 means this peaks can not map to any annotation.
+
+The `List` two is the meta plot which in the `ggplot` class. The user can use 
+all the functions from `ggplot2` to change the detail of this plot.
+
+```{r}
+library(ggplot2)
+meta[[2]] + ggtitle("Meta Profile")
+```
+For the advance usage, the `metaGeneProfile` provides two methods to calculate 
+the relative position. The first method return a relative position of peak in 
+the genomic feature without the introns. The second method return a relative 
+position value of the peak in the full transcript. With the parameter 
+`include_intron` we can easily shift between these two methods. If your data is 
+not a polyA plus data, we will recommend you to set `include_intron = TRUE`.
+
+```{r}
+meta <- metaGeneProfile(object = test, annotation = test_gff3, 
+                        include_intron = TRUE)
+meta[[2]]
+```
+If you would like to show a meta plot comparison of different treatments, you 
+can use the parameter `group` like this:
+
+```{r}
+test$Treat <- c(rep("Treatment 1",50), rep("Treatment 2", 50))
+meta <- metaGeneProfile(object = test, annotation = test_gff3, 
+                        group = "Treat")
+meta[[2]]
+```
+
+Besides, we also provide a annotation filtering for making the meta plot. The 
+`exlevel` and `extranscript_support_level` could be used for specifying which 
+_level_ or _transcript support level_ should be excluded. For excluding the  
+_transcript support level_ NA, you can use _6_. About more information of 
+_level_ and _transcript support level_ you can check the 
+[Gencode data format](https://www.gencodegenes.org/pages/data_format.html).
+
+```{r eval=FALSE}
+metaGeneProfile(object = test, annotation = test_gff3, exlevel = 3, 
+                extranscript_support_level = c(4,5,6))
+```
+
+The `split` option could help to make the meta plot for 5'UTR, CDS and 3'UTR 
+separately. The grey dotted line represents the peaks's distribution accross 
+all region.
+
+```{r}
+meta <- metaGeneProfile(object = test, annotation = test_gff3, split = TRUE)
+meta[[2]]
+```
+
+# intronProfile
+The function `intronProfile` generates the peaks profile in the intronic 
+region. Here is an example for a easy use of `intronProfile`.
+
+```{r}
+intron <-  intronProfile(test, test_gff3)
+```
+
+The output of `intronProfile` is similar to metaGeneProfile which contains two 
+`List`. `List` one is the input GRanges objects with the calculation result. 
+
+```{r}
+intron[[1]]
+```
+
+The explanation of meta data in the output of `intronProfile` list one is 
+pasted down below:  
+
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* **Intron_S and Intron_E** The location of 5' and 3' splice sites (SS) of the 
+intron.  
+* __Intron_length__ The length of the intron that peak assigned.  
+* __Intron_transcript_id__ The transcript ID for the intron.
+* **Intron_map** The relative position of each peak. This value close to 0 
+means this peak located close to the 5' SS. The position value close to one 
+means the peak close to the 3' SS. Value 3 means this peaks can not map to any 
+annotation.
+
+The `List` two includes a _ggplot_ object.
+
+```{r}
+intron[[2]]
+```
+
+In intronProfile, we provide options similar to metaGeneProfile, i.e. `group`, 
+`exlevel` and `extranscript_support_level`. The `group` function could be used 
+to generate the comparison plot.
+
+```{r}
+intron <-  intronProfile(test, test_gff3, group = "Treat")
+intron[[2]]
+```
+The parameter `exlevel` and `extranscript_support_level` could be used for 
+specifying which _level_ or _transcript support level_ should be excluded. 
+For excluding the  _transcript support level_ NA, you can use _6_. About more 
+information of _level_ and _transcript support level_ you can check the 
+[Gencode data format](https://www.gencodegenes.org/pages/data_format.html).
+
+```{r eval=FALSE}
+intronProfile(test, test_gff3, group = "Treat", exlevel = 3, 
+    extranscript_support_level = c(4,5,6))
+```
+
+Moreover, in the intronProfile we provide parameters `maxLength` and 
+`minLength` to filter the maximum and minimum length of the intron.
+
+```{r eval=FALSE}
+intronProfile(test, test_gff3, group = "Treat", maxLength = 10000,
+    minLength = 50)
+```
+
+# exonProfile
+The `exonProfile` could help to generate a profile of peaks in the exons which 
+surrounded by introns. The output of exonProfile is a `List` object. The `List` 
+one is the GRanges objects of input data with the calculation result. 
+
+```{r}
+## Quick use
+exon <- exonProfile(test, test_gff3)
+exon[[1]]
+```
+Here is the explanation of the meta data column that output from 
+`exonProfile`:  
+    
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* **exon_S and exon_E** The location of 5' and 3' splice sites (SS) of the 
+exon.  
+* __exon_length__ The length of the exon that peak assigned. 
+* __exon_transcript_id__ The transcript ID for the exon
+* **exon_map** The relative position of each peak. This value close to 0 means 
+this peak located close to the 3' SS. The position value close to one means the 
+peak close to the 5' SS. Value 3 means this peaks can not map to any 
+annotation.
+    
+The `List` two is a _ggplot_ object.
+
+```{r}
+exon[[2]]
+```
+
+The usage of all parameters of `exonProfile` is similar to `intronProfile`. For 
+more detail of parameter usage please check the `intronProfile` section.
+
+# windowProfile
+Since the `metaGeneProfile`, `intronProfile` and `exonProfile` require the 
+annotation file in a `gff3` format and downloaded from 
+[https://www.gencodegenes.org/](https://www.gencodegenes.org/). 
+These functions could only be used for _human_ and _mouse_. For the user who 
+work on other species, we develop the function `windowProfile`.  
+    
+`windowProfile` requires GRanges object as input and annotation. And 
+`windowProfile` output the relative position of each peaks within the given 
+annotation GRanges. For example, if you would like to make a _exon profile_ 
+with `windowProfile`, you just need to first extract all the exonic region as 
+a GRanges object then run the `windowProfile`. Here is an example about using 
+`windowProfile` to generate the _exon profile_.
+
+```{r, results='hide', warning=FALSE, message=FALSE}
+library(rtracklayer)
+## Extract all the exon annotation
+test_anno <- rtracklayer::import.gff3(test_gff3)
+test_anno <- test_anno[test_anno$type == "exon"]
+## Run the windowProfile
+window_profile <- windowProfile(test, test_anno)
+```
+
+The output of `windowProfile` is a `List` objects. In the `List` one, you will 
+find the GRanges object of input peaks and calculation result. And the `List` 
+two contains the _ggplot_ of `windowProfile`.
+
+```{r}
+window_profile[[1]]
+```
+
+Here is an explanation of the output of `windowProfile`:  
+    
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* **window_S and window_E** The boundary of the annotation that peaks are 
+assigned.  
+* **window_length** The length of the annotation feature.  
+* **window_map** The relative position of each peak. This value close to 0 
+means this peak located close to the 5' end of the annotation. The position 
+value close to one means the peak close to the 3' end. Value 3 means this 
+peaks can not map to any annotation.
+
+```{r}
+window_profile[[2]]
+```
+
+# motifProfile
+`motifProfile` generates the motif enrichment plot around the center of the 
+input peaks. The [IUPAC code](https://www.bioinformatics.org/sms/iupac.html) 
+could be used for the `motif` parameter. `flanking` represents to the window 
+that you would like to check around the center of peaks. The parameter 
+`fraction` could be use to change the y-axis from _fraction_ to _frequency_.  
+    
+Using the `motifProtile`, the `BSgenome` with the sequence information of 
+the species that you are working with is required to be pre-installed.
+
+```{R}
+## Example for running the motifProfile
+## The working species is mouse with mm10 annotation
+motif <- motifProfile(test, motif = "DRACH",
+    genome = "BSgenome.Mmusculus.UCSC.mm10",
+    fraction = TRUE, title = "Motif Profile",
+    flanking = 10)
+```
+
+The output of `motifProfile` is a `List` object. `List` one contains the 
+`data.frame` of the motif enrichment information. `List` two is the _ggplot_ 
+object of the plot of motif enrichment.  
+
+```{r}
+motif[[1]]
+```
+
+Each bar in the plot of `motifProfile` represents for the start site of the 
+motif that selected by the user.
+
+```{r}
+motif[[2]]
+```
+
+# geneTypeProfile
+The `geneTypeProfile` could give users the information of the gene type of the 
+input peaks. The input peaks for `geneTypeProfile` should be stored in the 
+GRanges objects. The annotation file should be a `gff3` file and downloaded 
+from [https://www.gencodegenes.org/](https://www.gencodegenes.org/).
+
+```{r}
+## Quick use of geneTypeProfile
+geneTP <- geneTypeProfile(test, test_gff3)
+```
+
+The output of `geneTypeProfile` is an `List` object. `List` one includes a 
+GRanges object with the input peaks and the assignment information. 
+
+```{r}
+geneTP[[1]]
+```
+
+Here is an explanation of the output GRanges object from the 
+`geneTypeProfile`.  
+    
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* **geneType** The gene type of the gene that input peak belongs to.
+* **Gene_ID** The gene ID of the gene that input peak belongs to.
+
+```{r}
+geneTP[[2]]
+```
+
+# spliceSiteProfile
+The `spliceSiteProfile` gives users the information of the peaks enrichment 
+around the 5' and 3' splice site (SS) in the absolute distance.
+
+```{r}
+SSprofile <- spliceSiteProfile(test, test_gff3, flanking=200, bin=40)
+```
+
+The output of `spliceSiteProfile` is a `List` object. The `List` one includes 
+the GRanges object of input peaks and the position information of this peak 
+around the SS.
+
+```{r}
+SSprofile[[1]]
+```
+
+Here is an explanation of output of `spliceSiteProfile`.  
+    
+* __center__ The center position of each peaks. This center position is used 
+for calculating the position of peaks within the genomic regions.  
+* **Position5SS** The absolute distance between peak and 5'SS. Negative value 
+means the peak is within the exonic region. Positive value means the peaks 
+located in the intron.
+* **Position3SS** The absolute distance between peak and 3'SS. Negative value 
+means the peak is within the intronic region. Positive value means the peaks 
+located in the exon.
+
+```{r}
+SSprofile[[2]]
+```
+
+For the `spliceSiteProfile` we offer the annotation filtering option `exlevel` 
+and `extranscript_support_level`. The `exlevel` and 
+`extranscript_support_level` could be used for specifying which _level_ or 
+_transcript support level_ should be excluded. For excluding the 
+_transcript support level_ NA, you can use _6_. About more information of 
+_level_ and _transcript support level_ you can check the 
+[Gencode data format](https://www.gencodegenes.org/pages/data_format.html).
+
+```{r eval=FALSE}
+spliceSiteProfile(test, test_gff3, flanking=200, bin=40, exlevel=2,
+                        extranscript_support_level = 3,
+                        title = "Splice Site Profile")
+```
+
+# SessionInfo
+The following is the session info that generated this vignette:
+
+```{r}
+sessionInfo()
+```
