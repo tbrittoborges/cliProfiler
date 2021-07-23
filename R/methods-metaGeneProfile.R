@@ -100,6 +100,7 @@ utils::globalVariables(c("transcript_id", "geneType", "Fraction", "Number",
     granges$E1 <- end(fullAnno)[overlap]
     granges$Add <- fullAnno$Add[overlap]
     granges$Gene_ID <- fullAnno$gene_id[overlap]
+    granges$Transcript_ID <- fullAnno$transcript_id[overlap]
     return(granges)
 }
 
