@@ -52,9 +52,63 @@
 ## The "spliceSiteProfile" methods for GRanges objects.
 ##
 
-#' @rdname spliceSiteProfile
-setMethod("spliceSiteProfile", signature(object="GRanges"),
-    function(object, annotation, title="Splice Site Profile",
+#' @title spliceSiteProfile for the GRanges objects
+#'
+#' @description An function to check the enrichment of peaks around the splice
+#'              sites in a absolute distance.
+#'
+#' @author You Zhou, Kathi Zarnack
+#'
+#' @param object A GRanges object which should contains all the peaks that you
+#'                want to check
+#' @param annotation A path way to the annotation file. The format of the
+#'                   annotation file should be gff3 and downloaded from
+#'                   https://www.gencodegenes.org/
+#' @param title The main title for the output meta gene profile plot.
+#' @param exlevel A parameter for the annotation filtering. exlevel represents
+#'     the level that you would like to exclude. NA means no level filtering
+#'     for the annotation file. The level from the annotations refers to
+#'     how reliable this annotation is. For more information about level
+#'     please check
+#'     https://www.gencodegenes.org/pages/data_format.html.
+#' @param extranscript_support_level A parameter for the annotation filtering.
+#'     extranscript_support_level represents the transcript_support_level
+#'     that you would like to exclude (e.g. 4 and 5). NA means no
+#'     transcript_support_level filtering for the annotation file.
+#'     Transcripts are scored according to how well mRNA and EST alignments
+#'     match over its full length. Here the number 6 means the
+#'     transcript_support_level NA. For more information about level please
+#'     check
+#'     https://www.gencodegenes.org/pages/data_format.html.
+#' @param exon_length_filtering The exon_length_filtering should be a logical
+#'     value which indicated whether user would like to exclude the exons
+#'     that have a length less than flanking value. Set this parameter to TRUE
+#'     to turn on this filtering step.
+#' @param intron_length_filtering The intron_length_filtering should be a
+#'     logical value which indicated whether user would like to exclude the
+#'     introns that have a length less than flanking value. Set this parameter
+#'     to TRUE to turn on this filtering step.
+#' @param flanking The size of the flanking windows that you would like to
+#'                 check. Flanking=5 will give you the result of the 10+1nt
+#'                 windows around the center of peaks.
+#' @param bin A number that indicates how many bins would you like to use in
+#'            the histogram.
+#'
+#' @return A list object, the list 1 contains the information of the
+#'         position of peaks around 5' or 3' splice sites. The list 2
+#'         includes the plot of spliceSiteProfile
+#' @examples
+#' ## Load the test data and get the path to the test gff3 file
+#' testpath <- system.file("extdata", package = "cliProfiler")
+#' test <- readRDS(file.path(testpath, "test.rds"))
+#' test_gff3 <- file.path(testpath, "annotation_test.gff3")
+#'
+#' output <- spliceSiteProfile(test, test_gff3,
+#'   flanking = 200, bin = 40
+#' )
+#' @export
+
+spliceSiteProfile <- function(object, annotation, title="Splice Site Profile",
     exlevel=NA, extranscript_support_level=NA, exon_length_filtering=TRUE,
     intron_length_filtering=TRUE, flanking=150, bin=30)
     {
@@ -117,53 +171,45 @@ setMethod("spliceSiteProfile", signature(object="GRanges"),
         ## First generate the coordinates for the 5'SS
         start_p <- .buildGRstart(introns_p)
         start_n <- .buildGRend(introns_n)
+        ## Filter out the duplicates
 
-        start_p <- start_p[order(start_p$level,
-            start_p$transcript_support_level,
-            -start_p$transcript_length)]
-        start_n <- start_n[order(start_n$level,
-            start_n$transcript_support_level,
-            -start_n$transcript_length)]
+        start <- c(start_p, start_n)
+        start <- unique(start)
+
+        start <- start[order(start$level,
+            start$transcript_support_level,
+            -start$transcript_length)]
 
         ## Extend the 5'SS for checking
-        start_p <- start_p+flanking
-        o <- findOverlaps(object, start_p, select = "first")
-        start_n <- start_n+flanking
-        o2 <- findOverlaps(object, start_n, select = "first")
+        start <- start+flanking
+        o <- findOverlaps(object, start, select = "first")
 
-        object$start_p <- start_p$ss[o]
-        object$start_n <- start_n$ss[o2]
-
-        object_p <- object[strand(object)=="+"]
-        object_n <- object[strand(object)=="-"]
-
-        object_p$Position5SS <- start(object_p)-object_p$start_p
-        object_n$Position5SS <- object_n$start_n-start(object_n)
-
-        object <- c(object_n, object_p)
+        object$start_2 <- start$ss[o]
 
         ## Check 3' splice sites (3'SS)
         end_p <- .buildGRend(introns_p)
         end_n <- .buildGRstart(introns_n)
+        end <- c(end_p, end_n)
+        end <- unique(end)
 
-        end_p <- end_p[order(end_p$level,
-            end_p$transcript_support_level, -end_p$transcript_length)]
-        end_n <- end_n[order(end_n$level,
-            end_n$transcript_support_level, -end_n$transcript_length)]
+        end <- end[order(end$level,
+            end$transcript_support_level,
+            -end$transcript_length)]
 
-        end_p <- end_p+flanking
-        oo <- findOverlaps(object, end_p, select = "first")
-        end_n <- end_n+flanking
-        oo2 <- findOverlaps(object, end_n, select = "first")
+        end <- end+flanking
+        oo <- findOverlaps(object, end, select = "first")
 
-        object$end_p <- end_p$ss[oo]
-        object$end_n <- end_n$ss[oo2]
+        object$end_2 <- end$ss[oo]
 
         object_p <- object[strand(object)=="+"]
         object_n <- object[strand(object)=="-"]
 
-        object_p$Position3SS <- start(object_p)-object_p$end_p
-        object_n$Position3SS <- object_n$end_n-start(object_n)
+        ## calculation
+        object_p$Position5SS <- start(object_p)-object_p$start_2
+        object_n$Position5SS <- object_n$start_2-start(object_n)
+
+        object_p$Position3SS <- start(object_p)-object_p$end_2
+        object_n$Position3SS <- object_n$end_2-start(object_n)
 
         object <- c(object_n, object_p)
 
@@ -185,10 +231,8 @@ setMethod("spliceSiteProfile", signature(object="GRanges"),
             geom_vline(xintercept = 0, linetype = 2,
             color = "cornflowerblue")
 
-        object$start_p <- NULL
-        object$start_n <- NULL
-        object$end_p <- NULL
-        object$end_n <- NULL
+        object$start_2 <- NULL
+        object$end_2 <- NULL
         GenomicRanges::start(object) <- object$oriStart
         GenomicRanges::end(object) <- object$oriEnd
         object$oriStart <- NULL
@@ -197,4 +241,3 @@ setMethod("spliceSiteProfile", signature(object="GRanges"),
         out <- list(Peaks=object, Plot=p)
         return(out)
     }
-)

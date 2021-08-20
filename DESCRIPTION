@@ -29,6 +29,6 @@ RoxygenNote: 7.1.1
 Imports: 
     dplyr, rtracklayer, GenomicRanges, ggplot2, BSgenome, Biostrings, utils
 Depends: 
-    S4Vectors, methods, R (>= 4.0.0)
+    S4Vectors, methods, R (>= 4.1)
 Suggests: 
     knitr, rmarkdown, bookdown, testthat, BiocStyle

@@ -25,13 +25,13 @@ BiocStyle::markdown()
 
 # Introduction
 
-Immunoprecipitation (IP) is the technique of precipitating a protein antigen 
-out of solution using an antibody that specifically binds to that particular 
-protein. This technique is widely used in the biological field. With the advent 
-of Next Generation Sequencing (NGS) technology, IP has also been introduced 
-into the high-throughput experiments, e.g. iCLIP, MeRIP and eCLIP. In order to 
-make it easier for the researchers to visualize their high-throughput IP 
-experiment data (peaks), we develop `r Biocpkg("cliProfiler")` package. The 
+Cross-linking immunoprecipitation (CLIP) is a technique that combines UV 
+cross-linking and immunoprecipitation to analyse protein-RNA interactions or to 
+pinpoint RNA modifications (e.g. m6A). CLIP-based methods, such as iCLIP and 
+eCLIP, allow precise mapping of RNA modification sites or RNA-binding protein 
+(RBP) binding sites on a genome-wide scale. These techniques help us to unravel 
+post-transcriptional regulatory networks. In order to make the visualization of 
+CLIP data easier, we develop `r Biocpkg("cliProfiler")` package. The 
 `r Biocpkg("cliProfiler")` includes seven functions which allow users easily 
 make different profile plots.
 
@@ -54,7 +54,8 @@ library(cliProfiler)
 
 # Data and Annotation Requirement 
 The input data for using all the functions in `r Biocpkg("cliProfiler")` should 
-be stored in the **GRanges** objects. The **GRanges** is an S4 class which 
+be `peaks` that comes from the CLIP or other IP experiments. Moreover, these 
+`peaks` be stored in the **GRanges** object. The **GRanges** is an S4 class which 
 defined by `r Biocpkg("GenomicRanges")`. The GRanges class is a container for 
 the genomic locations and their associated annotations. For more information 
 about GRanges objects please check `r Biocpkg("GenomicRanges")` package.
@@ -62,14 +63,18 @@ about GRanges objects please check `r Biocpkg("GenomicRanges")` package.
 The annotation file that required by functions `exonProfile`, 
 `geneTypeProfile`, `intronProfile`, `spliceSiteProfile` and `metaGeneProfile` 
 should be in the `gff3` format and download from 
-[https://www.gencodegenes.org/](https://www.gencodegenes.org/). So these five 
-functions can now only be used for *Human* and *Mouse*.
+[https://www.gencodegenes.org/](https://www.gencodegenes.org/). Therefore, these 
+five functions can now only be used for *Human* and *Mouse*.
+
+The function `windowProfile` allows users to find out the enrichment of peaks 
+against the customized annotation file. This customized annotation file should 
+be stored in the **GRanges** object. 
 
 # metaGeneProfile
 `metaGeneProfile` outputs the meta plot which shows the location of peaks 
-within the genomic region. This meta plot is widely used in the epigenetics 
-field, especially for N6-Methyladenosine (m6A). The input of this function 
-should be a GRanges object like this:
+within different genomic regions. This meta plot is widely used in the 
+epigenetics field, especially for N6-Methyladenosine (m6A). The input of this 
+function should be a `GRanges` object like this:
 
 ```{r}
 ## For testing all the function we need to first load the test data
@@ -82,7 +87,9 @@ test
 
 The input annotation file of `metaGeneProfile` should be in a `gff3` format 
 and download from [Gencode](https://www.gencodegenes.org/). The user needs to 
-input the GRanges object and the path to the `gff3` file for easy use.
+input the GRanges object and the path to the `gff3` file for using this 
+function.
+
 The output of `metaGeneProfile` is a `list` objects. The `List` one contains 
 the GRanges objects with the calculation result which can be used in different 
 ways by the user later.
@@ -217,7 +224,7 @@ intronProfile(test, test_gff3, group = "Treat", maxLength = 10000,
 
 # exonProfile
 The `exonProfile` could help to generate a profile of peaks in the exons which 
-surrounded by introns. The output of exonProfile is a `List` object. The `List` 
+**surrounded by introns**. The output of exonProfile is a `List` object. The `List` 
 one is the GRanges objects of input data with the calculation result. 
 
 ```{r}
@@ -298,8 +305,9 @@ window_profile[[2]]
 # motifProfile
 `motifProfile` generates the motif enrichment plot around the center of the 
 input peaks. The [IUPAC code](https://www.bioinformatics.org/sms/iupac.html) 
-could be used for the `motif` parameter. `flanking` represents to the window 
-that you would like to check around the center of peaks. The parameter 
+could be used for the `motif` parameter. The `IUPAC` code includes: A, T, C, G, 
+R, Y, S, W, K, M, B, D, H, V, N. `flanking` represents to the size of window 
+that user would like to check around the center of peaks. The parameter 
 `fraction` could be use to change the y-axis from _fraction_ to _frequency_.  
     
 Using the `motifProtile`, the `BSgenome` with the sequence information of 

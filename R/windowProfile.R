@@ -58,8 +58,56 @@
 ## The "windowProfile" methods for GRanges objects.
 ##
 
-#' @rdname windowProfile
-setMethod("windowProfile", signature(object="GRanges", annotation="GRanges"),
+#' @title windowProfile for the GRanges objects
+#'
+#' @description An function to check the position of peaks within the given
+#'              GRanges windows.
+#'
+#' @author You Zhou, Kathi Zarnack
+#'
+#' @param object A GRanges object which contains all the peaks that you
+#'                want to check
+#' @param annotation A GRanges object that includes the customised genomic
+#'                   region.
+#' @param title The main title for the output meta gene profile plot.
+#' @param group The column name which contains the information of grouping
+#'     for making the comparison plot. NA means all the peaks belongs to
+#'     the same catagory.
+#' @param nomap A logical vector (TRUE or FALSE). It indicates whether you
+#'              would like to exclude peaks that cannot assign to annotations
+#'              in the plot.
+#' @details
+#' \itemize{
+#'     Here is an explanation of output meta data in the \code{list 1}:
+#'     \item \code{center}: The center position of each peaks. This center
+#'     position is used for calculating the position of peaks within the
+#'     genomic regions.
+#'     \item \code{window_S} and \code{window_E}: The boundary of the
+#'     annotation that peaks are assigned.
+#'     \item \code{window_length}: The length of the annotation feature that
+#'     peak assigned.
+#'     \item \code{window_map}: The relative position of each peak. This value
+#'     close to 0 means this peak located close to the 5' end of the
+#'     annotation. The position value close to one means the peak close to
+#'     the 3' end. Value 3 means this peaks can not map to any annotation.
+#' }
+#'
+#' @return A list object, the list 1 contains the information of the
+#'         assignment of the peaks and their position value within the given
+#'         region. The value close to 1 means the peak close to the end of
+#'         region in 3' end direction. The list 2 includes the ggplot of
+#'         windowProfile.
+#' @examples
+#' ## Load the test data and get the path to the test gff3 file
+#' testpath <- system.file("extdata", package = "cliProfiler")
+#' test <- readRDS(file.path(testpath, "test.rds"))
+#' test_gff3 <- file.path(testpath, "annotation_test.gff3")
+#' test_gff3 <- rtracklayer::import.gff3(test_gff3)
+#'
+#' output <- windowProfile(test, test_gff3)
+#' @export
+
+windowProfile <-
     function(object, annotation, title="Window Profile", group=NA, nomap=FALSE)
     {
         if (missing(object))
@@ -131,4 +179,3 @@ setMethod("windowProfile", signature(object="GRanges", annotation="GRanges"),
         output <- list(Peaks = object, Plot = p1)
         return(output)
     }
-)

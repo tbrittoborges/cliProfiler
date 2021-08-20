@@ -69,7 +69,7 @@ utils::globalVariables(c("transcript_id", "geneType", "Fraction", "Number",
     annoP <- sort(annoP) %>% as.data.frame()
     annoP <- annoP %>% group_by(transcript_id) %>%
         mutate(Add = c(0, cumsum(width)[-length(width)]))
-    annoP <- makeGRangesFromDataFrame(annoP,keep.extra.columns = TRUE)
+    annoP <- makeGRangesFromDataFrame(annoP, keep.extra.columns = TRUE)
     return(annoP)
 }
 
@@ -282,9 +282,85 @@ utils::globalVariables(c("transcript_id", "geneType", "Fraction", "Number",
 ## The "metaGeneProfile" methods for GRanges objects.
 ##
 
-#' @rdname metaGeneProfile
-setMethod("metaGeneProfile", signature(object="GRanges"),
-    function(object, annotation, include_intron=FALSE,
+#' @title metaGeneProfile for the GRanges objects
+#'
+#' @description An function for calculating the genomic position and generate
+#'              the meta gene profile plot of the input peaks.
+#'
+#' @author You Zhou, Kathi Zarnack
+#'
+#' @param object A GRanges object which should contains all the peaks that you
+#'                want to check
+#' @param annotation A path way to the annotation file. The format of the
+#'                   annotation file should be gff3 and downloaded from
+#'                   https://www.gencodegenes.org/
+#' @param include_intron A logical vector TRUE or FALSE that define whether
+#'                       the intronic region should be included in the position
+#'                       calculation or not.
+#' @param title The main title for the output meta gene profile plot.
+#' @param group The column name which contains the information of grouping
+#'     for making the comparison plot. NA means all the peaks belongs to
+#'     the same catagory.
+#' @param split A logical vector which indicates whether the plot should show
+#'     the density curve for 3'UTR, CDS 5'UTR, respectively.
+#' @param exlevel A parameter for the annotation filtering. exlevel represents
+#'     the level that you would like to exclude. NA means no level filtering
+#'     for the annotation file. The level from the annotations refers to
+#'     how reliable this annotation is. For more information about level
+#'     please check
+#'     https://www.gencodegenes.org/pages/data_format.html.
+#' @param extranscript_support_level A parameter for the annotation filtering.
+#'     extranscript_support_level represents the transcript_support_level
+#'     that you would like to exclude (e.g. 4 and 5). NA means no
+#'     transcript_support_level filtering for the annotation file.
+#'     Transcripts are scored according to how well mRNA and EST alignments
+#'     match over its full length. Here the number 6 means the
+#'     transcript_support_level NA. For more information about level please
+#'     check
+#'     https://www.gencodegenes.org/pages/data_format.html.
+#' @param adjust A parameter inherit from ggplot2. A multiplicate bandwidth
+#'               adjustment. This makes it possible to adjust the bandwidth
+#'               while still using the a bandwidth estimator. For example,
+#'               adjust = 1/2 means use half of the default bandwidth.
+#' @param nomap A logical vector. It indicates whether you would like to
+#'              exclude peaks that cannot assign to annotations in the plot.
+#' @details
+#' \itemize{
+#'     Here is an explanation of output meta data in the \code{list 1}:
+#'     \item \code{center}: The center position of each peaks. This center
+#'     position is used for calculating the position of peaks within the
+#'     genomic regions.
+#'     \item \code{location}: Which genomic region this peak belongs to.
+#'     \item \code{Gene ID}: Which gene this peak belongs to.
+#'     \item \code{Position}: The relative position of each peak. This
+#'     value close to 0 means this peak located close to the 5' end of the
+#'     genomic feature. The position value close to one means the peak close to
+#'     the 3' end of the genomic feature. Value 5 means this peaks can not map
+#'     to any annotation.
+#' }
+#'
+#' @return A list object, the list 1 contains the information of the assignment
+#'     of the peaks and their position value. The position value between 0 to 1
+#'     means it located at the 5' UTR, the value close to the 1 means the
+#'     position of this peak close to the 3' end of the 5' UTR. Peaks located
+#'     at CDS would have a number between 1 and 2. Postion value between 2 to 3
+#'     means this peak assigned to the 3' UTR. For the peaks which can not be
+#'     assignment to any annotations, they have the value 5. The list 2
+#'     includes the plot of meta gene profile.
+#' @examples
+#' ## Load the test data and get the path to the test gff3 file
+#' testpath <- system.file("extdata", package = "cliProfiler")
+#' test <- readRDS(file.path(testpath, "test.rds"))
+#' test_gff3 <- file.path(testpath, "annotation_test.gff3")
+#'
+#' output <- metaGeneProfile(
+#'   object = test, annotation = test_gff3,
+#'   include_intron = FALSE
+#' )
+#' @export
+#'
+
+metaGeneProfile <- function(object, annotation, include_intron=FALSE,
     title="Meta Gene Profile", group=NA, split=FALSE,
     exlevel=NA, extranscript_support_level=NA,
     adjust=1, nomap=FALSE)
@@ -379,16 +455,18 @@ setMethod("metaGeneProfile", signature(object="GRanges"),
                 UTR3$type2 <- "UTR3"
                 ## Assign the transcript length for the following peak
                 ## assignment
-                anno.transcript <- anno[anno$type == "transcript"]
-                UTR5$transcript_length <- width(
-                    anno.transcript[match(UTR5$transcript_id,
-                    anno.transcript$transcript_id)])
-                UTR3$transcript_length <- width(
-                    anno.transcript[match(UTR3$transcript_id,
-                    anno.transcript$transcript_id)])
-                CDS$transcript_length <- width(
-                    anno.transcript[match(CDS$transcript_id,
-                    anno.transcript$transcript_id)])
+                anno_exon <- anno[anno$type == "exon"]
+                anno_exon <- as.data.frame(anno_exon) %>%
+                    group_by(transcript_id) %>%
+                    mutate(trans_len = sum(width)) %>%
+                    makeGRangesFromDataFrame(., keep.extra.columns = TRUE)
+
+                UTR5$transcript_length <- anno_exon$trans_len[
+                        match(UTR5$transcript_id, anno_exon$transcript_id)]
+                UTR3$transcript_length <- anno_exon$trans_len[
+                    match(UTR3$transcript_id, anno_exon$transcript_id)]
+                CDS$transcript_length <- anno_exon$trans_len[
+                    match(CDS$transcript_id, anno_exon$transcript_id)]
 
                 ## Rank the transcript fragments base on the level,
                 ## transcript support level and transcript length ##
@@ -404,7 +482,7 @@ setMethod("metaGeneProfile", signature(object="GRanges"),
                 ## Use select = "first" to assign peaks to the first
                 ## ranked annotation
                 o <- findOverlaps(object, fullAnno, select = "first")
-                object <- .peakAssignment(object, o,fullAnno)
+                object <- .peakAssignment(object, o, fullAnno)
 
                 ## Remove all the NA from the object
                 object$location[is.na(object$location)] <- "NO"
@@ -538,4 +616,3 @@ setMethod("metaGeneProfile", signature(object="GRanges"),
             return(output)
         }
     }
-)

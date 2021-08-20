@@ -94,9 +94,49 @@
 ## The "motifProfile" methods for GRanges objects.
 ##
 
-#' @rdname motifProfile
-setMethod("motifProfile", signature(object="GRanges"),
-    function(object, motif=NA, genome=NA, fraction=TRUE,
+#' @title motifProfile for the GRanges objects
+#'
+#' @description An function to plot the frequency or fraction of the interested
+#'              motif around the center of input peaks.
+#'
+#' @author You Zhou, Kathi Zarnack
+#'
+#' @param object A GRanges object which should contains all the peaks that you
+#'                want to check
+#' @param motif A character string which use the IUPAC nucleotide code, e.g.
+#'              DRACH, TTAGGG.
+#' @param genome The name of the full genome sequences package in the
+#'               Bioconductor, e.g. "BSgenome.Mmusculus.UCSC.mm10". You should
+#'               install the package before running this function.
+#' @param fraction A logical vector (TRUE or FALSE) that the result should be
+#'                 presented in fraction or number.
+#' @param title The main title for the output meta gene profile plot.
+#' @param flanking The size of the flanking windows that you would like to
+#'                 check. Flanking=5 will give you the result of the 10+1nt
+#'                 windows around the center of peaks.
+#'
+#' @return A list object, the list 1 contains the information of the
+#'         frequency of specified motif around the center of peaks. The list 2
+#'         includes the plot of motifProfile.
+#' @examples
+#' ## Load the test data and get the path to the test gff3 file
+#' testpath <- system.file("extdata", package = "cliProfiler")
+#' test <- readRDS(file.path(testpath, "test.rds"))
+#' test_gff3 <- file.path(testpath, "annotation_test.gff3")
+#'
+#' ## Please make sure that the correct BSgenome package have installed before
+#' ## running motifProfile. For example,library("BSgenome.Mmusculus.UCSC.mm10")
+#' ## would be required for the mouse data.
+#'
+#' output <- motifProfile(test,
+#'   motif = "DRACH",
+#'   genome = "BSgenome.Mmusculus.UCSC.mm10",
+#'   flanking = 20
+#' )
+#' @export
+#'
+
+motifProfile <- function(object, motif=NA, genome=NA, fraction=TRUE,
     title="Motif Profile", flanking=10)
     {
         if (!is.character(motif))
@@ -121,7 +161,7 @@ setMethod("motifProfile", signature(object="GRanges"),
             IUPAC <- c("A", "T", "C", "G", "R", "Y", "S", "W", "K",
                 "M", "B", "D", "H", "V", "N")
             if (sum(!splitString[,1] %in% IUPAC) != 0)
-                stop("The 'motif' should use the IUPAC nucleotide code.")
+                stop("The 'motif' should be the IUPAC nucleotide code.")
 
             ## Transfer the IUPAC code
             checkmotif <- .transMotif(motif)
@@ -145,4 +185,3 @@ setMethod("motifProfile", signature(object="GRanges"),
             return(output)
         }
     }
-)
