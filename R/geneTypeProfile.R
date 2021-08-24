@@ -16,9 +16,9 @@
 {
     p1 <- ggplot(df, aes(x=geneType)) +
         geom_bar(fill="orange", color="cornflowerblue") +
-        geom_label(stat='count', aes(label=..count..), vjust=0) +
+        geom_label(stat='count', aes(label=..count..), vjust=0.8) +
         theme_bw() + ggtitle(title) +
-        theme(axis.text.x = element_text(angle = 45, hjust=0))
+        theme(axis.text.x = element_text(angle = 45, hjust=1))
     return(p1)
 }
 
