@@ -207,7 +207,8 @@ intronProfile <- function(object, annotation, title="Intron Profile", group=NA,
             stop("The nomap should be a logical vector (TRUE or FALSE).")
         level <- c(1,2,3,NA)
         tsl <- c(1,2,3,4,5,6,NA)
-        if (!exlevel %in% level| !extranscript_support_level %in% tsl)
+        if (sum(!exlevel %in% level) > 0 |
+            sum(!extranscript_support_level %in% tsl) > 0)
             warning("The exlevel should be a vector includes the value of 1, 2,
                 3 or NA. extranscript_support_level should be a vector includes
                 value 1, 2, 3, 4, 5, 6 or NA.")
@@ -232,10 +233,10 @@ intronProfile <- function(object, annotation, title="Intron Profile", group=NA,
         introns$intronID <- seq_len(length(introns))
 
         ## Annotation filtering
-        if (!is.na(exlevel)) {
+        if (sum(is.na(exlevel)) == 0) {
             introns <- .annoFilterLevel(introns, exlevel)
         }
-        if (!is.na(extranscript_support_level)) {
+        if (sum(is.na(extranscript_support_level)) == 0) {
             introns <- .annoFilterTSL(introns, extranscript_support_level)
         }
         if (!is.na(maxLength)) {

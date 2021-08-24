@@ -107,10 +107,10 @@ geneTypeProfile <- function(object, annotation, title="Gene Type Profile",
             match(trans$transcript_id, anno_exon$transcript_id)]
 
         ## annotation filtering
-        if (!is.na(exlevel)) {
+        if (sum(is.na(exlevel)) == 0) {
             trans <- .annoFilterLevel(trans, exlevel)
         }
-        if (!is.na(extranscript_support_level)) {
+        if (sum(is.na(extranscript_support_level)) == 0) {
             trans <- .annoFilterTSL(trans, extranscript_support_level)
         }
 

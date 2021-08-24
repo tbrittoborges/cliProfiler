@@ -124,7 +124,8 @@ spliceSiteProfile <- function(object, annotation, title="Splice Site Profile",
             stop("The parameter bin should be a numeric.")
         level <- c(1,2,3,NA)
         tsl <- c(1,2,3,4,5,6,NA)
-        if (!exlevel %in% level| !extranscript_support_level %in% tsl)
+        if (sum(!exlevel %in% level) > 0 |
+            sum(!extranscript_support_level %in% tsl) > 0)
             warning("The exlevel should be a vector includes the value of 1, 2,
                 3 or NA. extranscript_support_level should be a vector includes
                 value 1, 2, 3, 4, 5, 6 or NA.")
@@ -149,10 +150,10 @@ spliceSiteProfile <- function(object, annotation, title="Splice Site Profile",
         ## center peaks
         object <- .centerPeaks(object)
         ## annotation filtering
-        if (!is.na(exlevel)) {
+        if (sum(is.na(exlevel)) == 0) {
             introns <- .annoFilterLevel(introns, exlevel)
         }
-        if (!is.na(extranscript_support_level)) {
+        if (sum(is.na(extranscript_support_level)) == 0) {
             introns <- .annoFilterTSL(introns, extranscript_support_level)
         }
         if (isTRUE(exon_length_filtering)) {

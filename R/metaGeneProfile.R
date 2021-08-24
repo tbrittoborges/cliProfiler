@@ -391,15 +391,16 @@ metaGeneProfile <- function(object, annotation, include_intron=FALSE,
             profile curve for different groups")
         level <- c(1,2,3,NA)
         tsl <- c(1,2,3,4,5,6,NA)
-        if (!exlevel %in% level| !extranscript_support_level %in% tsl)
+        if (sum(!exlevel %in% level) > 0 |
+            sum(!extranscript_support_level %in% tsl) > 0)
             warning("The exlevel should be a vector includes the value of 1, 2,
                 3 or NA. extranscript_support_level should be a vector includes
                 value 1, 2, 3, 4, 5, 6 or NA.")
-        if (isTRUE(split)& !is.na(group))
-            stop("If you would like to use the group option please set split to
+        if (isTRUE(split) & !is.na(group))
+            stop("If you would like to use the group option, please set split to
             FALSE. Conversely, when you set split to TRUE please set group
             to NA to make sure the plot is readable.")
-        if(isS4(object)&length(GenomicRanges::seqnames(object)) != 0){
+        if(isS4(object) & length(GenomicRanges::seqnames(object)) != 0){
             ## import annotation file
             anno <- rtracklayer::import.gff3(con = annotation)
 
@@ -409,10 +410,10 @@ metaGeneProfile <- function(object, annotation, include_intron=FALSE,
             anno$transcript_support_level[
                 anno$transcript_support_level == "NA"] <- 6
 
-            if (!is.na(exlevel)) {
+            if (sum(is.na(exlevel)) == 0) {
                 anno <- .annoFilterLevel(anno, exlevel)
             }
-            if (!is.na(extranscript_support_level)) {
+            if (sum(is.na(extranscript_support_level)) == 0) {
                 anno <- .annoFilterTSL(anno, extranscript_support_level)
             }
 
