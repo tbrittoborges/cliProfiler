@@ -52,29 +52,15 @@ R session with
 library(cliProfiler)
 ```
 
-# Data and Annotation Requirement 
-The input data for using all the functions in `r Biocpkg("cliProfiler")` should 
-be `peaks` that comes from the CLIP or other IP experiments. Moreover, these 
-`peaks` be stored in the **GRanges** object. The **GRanges** is an S4 class which 
-defined by `r Biocpkg("GenomicRanges")`. The GRanges class is a container for 
-the genomic locations and their associated annotations. For more information 
-about GRanges objects please check `r Biocpkg("GenomicRanges")` package.
+# The Requirement of Data and Annotation file 
+The input data for using all the functions in `r Biocpkg("cliProfiler")` should be the peak calling result or other similar object that represents the RBP binding sites or RNA modification position. Moreover, these `peaks/signals` be stored in the **GRanges** object. The **GRanges** is an S4 class which defined by `r Biocpkg("GenomicRanges")`. The GRanges class is a container for the genomic locations and their associated annotations. For more information about GRanges objects please check `r Biocpkg("GenomicRanges")` package.
 
-The annotation file that required by functions `exonProfile`, 
-`geneTypeProfile`, `intronProfile`, `spliceSiteProfile` and `metaGeneProfile` 
-should be in the `gff3` format and download from 
-[https://www.gencodegenes.org/](https://www.gencodegenes.org/). Therefore, these 
-five functions can now only be used for *Human* and *Mouse*.
+The annotation file that required by functions `exonProfile`, `geneTypeProfile`, `intronProfile`, `spliceSiteProfile` and `metaGeneProfile` should be in the `gff3` format and download from [https://www.gencodegenes.org/](https://www.gencodegenes.org/). 
 
-The function `windowProfile` allows users to find out the enrichment of peaks 
-against the customized annotation file. This customized annotation file should 
-be stored in the **GRanges** object. 
+The function `windowProfile` allows users to find out the enrichment of peaks against the customized annotation file. This customized annotation file should be stored in the **GRanges** object. 
 
 # metaGeneProfile
-`metaGeneProfile` outputs the meta plot which shows the location of peaks 
-within different genomic regions. This meta plot is widely used in the 
-epigenetics field, especially for N6-Methyladenosine (m6A). The input of this 
-function should be a `GRanges` object like this:
+`metaGeneProfile` outputs the metaplot, which shows the location of peaks within different genomic regions. This meta plot is widely used in the epigenetics field, especially for N6-Methyladenosine (m6A). The input of this function should be a `GRanges` object. Here is an example of the `GRanges` object:
 
 ```{r}
 ## For testing all the function we need to first load the test data
@@ -85,14 +71,9 @@ test <- readRDS(file.path(testpath, "test.rds"))
 test
 ```
 
-The input annotation file of `metaGeneProfile` should be in a `gff3` format 
-and download from [Gencode](https://www.gencodegenes.org/). The user needs to 
-input the GRanges object and the path to the `gff3` file for using this 
-function.
+Besides the `GRanges` object, a path to the `gff3` annotation file which download from [Gencode](https://www.gencodegenes.org/) is required by `metaGeneProfile`.
 
-The output of `metaGeneProfile` is a `list` objects. The `List` one contains 
-the GRanges objects with the calculation result which can be used in different 
-ways by the user later.
+The output of `metaGeneProfile` is a `List` objects. The `List` one contains the GRanges objects with the calculation result which can be used in different ways later.
 
 ```{r}
 meta <- metaGeneProfile(object = test, annotation = test_gff3)
@@ -101,36 +82,27 @@ meta[[1]]
 
 Here is an explanation of the metaData columns of the output GRanges objects:  
     
-* __center__ The center position of each peaks. This center position is used 
-for calculating the position of peaks within the genomic regions.  
-* __location__ Which genomic region this peak belongs to.  
-* __Gene ID__ Which gene this peak belongs to.  
-* __Position__ The relative position of each peak. This value close to 0 means 
-this peak located close to the 5' end of the genomic feature. The position 
-value close to one means the peak close to the 3' end of the genomic feature. 
-Value 5 means this peaks can not map to any annotation.
+* __center__ The center position of each peaks. This center position is used for calculating the position of peaks within the assigned genomic regions.  
+* __location__ The genomic region to which this `peak/signal` belongs to.  
+* __Gene ID__ The gene to which this `peak/signal` belongs. 
+* __Position__ The relative position of each `peak/signal` within the genomic region. This value close to 0 means this peak located close to the 5' end of the genomic feature. The position value close to 1 means the peak close to the 3' end of the genomic feature. Value 5 means this peaks can not be mapped to any annotations.
 
-The `List` two is the meta plot which in the `ggplot` class. The user can use 
-all the functions from `ggplot2` to change the detail of this plot.
+The `List` two is the meta plot which in the `ggplot` class. The user can use all the functions from `ggplot2` to change the detail of this plot.
 
 ```{r}
 library(ggplot2)
 meta[[2]] + ggtitle("Meta Profile")
 ```
-For the advance usage, the `metaGeneProfile` provides two methods to calculate 
-the relative position. The first method return a relative position of peak in 
-the genomic feature without the introns. The second method return a relative 
-position value of the peak in the full transcript. With the parameter 
-`include_intron` we can easily shift between these two methods. If your data is 
-not a polyA plus data, we will recommend you to set `include_intron = TRUE`.
+
+For the advance usage, the `metaGeneProfile` provides two methods to calculate the relative position. The first method return a relative position of the `peak/signal` in the genomic feature without the introns. The second method return a relative position value of the peak in the genomic feature with the introns. With the parameter `include_intron` we can easily shift between these two methods. If the data is a polyA plus data, we will recommend you to set `include_intron = FALSE`.
 
 ```{r}
 meta <- metaGeneProfile(object = test, annotation = test_gff3, 
                         include_intron = TRUE)
 meta[[2]]
 ```
-If you would like to show a meta plot comparison of different treatments, you 
-can use the parameter `group` like this:
+
+The `group` option allows user to make a meta plot with multiple conditions. Here is an example:
 
 ```{r}
 test$Treat <- c(rep("Treatment 1",50), rep("Treatment 2", 50))
@@ -139,12 +111,7 @@ meta <- metaGeneProfile(object = test, annotation = test_gff3,
 meta[[2]]
 ```
 
-Besides, we also provide a annotation filtering for making the meta plot. The 
-`exlevel` and `extranscript_support_level` could be used for specifying which 
-_level_ or _transcript support level_ should be excluded. For excluding the  
-_transcript support level_ NA, you can use _6_. About more information of 
-_level_ and _transcript support level_ you can check the 
-[Gencode data format](https://www.gencodegenes.org/pages/data_format.html).
+Besides, we provide an annotation filtering option for making the meta plot. The `exlevel` and `extranscript_support_level` could be used for specifying which _level_ or _transcript support level_ should be excluded. For excluding the  _transcript support level_ NA, user can use _6_ instead of NA. About more information of _level_ and _transcript support level_ you can check the [Gencode data format](https://www.gencodegenes.org/pages/data_format.html).
 
 ```{r eval=FALSE}
 metaGeneProfile(object = test, annotation = test_gff3, exlevel = 3, 
