@@ -67,7 +67,7 @@ A list object, the list 1 contains the information of the
 }
 \description{
 An function to check the enrichment of peaks around the splice
-             sites in a absolute distance.
+    sites in a absolute distance.
 }
 \examples{
 ## Load the test data and get the path to the test gff3 file
@@ -76,7 +76,7 @@ test <- readRDS(file.path(testpath, "test.rds"))
 test_gff3 <- file.path(testpath, "annotation_test.gff3")
 
 output <- spliceSiteProfile(test, test_gff3,
-  flanking = 200, bin = 40
+    flanking = 200, bin = 40
 )
 }
 \author{

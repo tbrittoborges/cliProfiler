@@ -99,8 +99,8 @@ test <- readRDS(file.path(testpath, "test.rds"))
 test_gff3 <- file.path(testpath, "annotation_test.gff3")
 
 output <- metaGeneProfile(
-  object = test, annotation = test_gff3,
-  include_intron = FALSE
+    object = test, annotation = test_gff3,
+    include_intron = FALSE
 )
 }
 \author{

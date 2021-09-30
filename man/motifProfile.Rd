@@ -35,12 +35,12 @@ windows around the center of peaks.}
 }
 \value{
 A list object, the list 1 contains the information of the
-        frequency of specified motif around the center of peaks. The list 2
-        includes the plot of motifProfile.
+    frequency of specified motif around the center of peaks. The list 2
+    includes the plot of motifProfile.
 }
 \description{
 An function to plot the frequency or fraction of the interested
-             motif around the center of input peaks.
+    motif around the center of input peaks.
 }
 \examples{
 ## Load the test data and get the path to the test gff3 file
@@ -53,9 +53,9 @@ test_gff3 <- file.path(testpath, "annotation_test.gff3")
 ## would be required for the mouse data.
 
 output <- motifProfile(test,
-  motif = "DRACH",
-  genome = "BSgenome.Mmusculus.UCSC.mm10",
-  flanking = 20
+    motif = "DRACH",
+    genome = "BSgenome.Mmusculus.UCSC.mm10",
+    flanking = 20
 )
 }
 \author{

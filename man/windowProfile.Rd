@@ -38,7 +38,7 @@ A list object, the list 1 contains the information of the
 }
 \description{
 An function to check the position of peaks within the given
-             GRanges windows.
+    GRanges windows.
 }
 \details{
 \itemize{
