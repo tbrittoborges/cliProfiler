@@ -291,9 +291,7 @@ utils::globalVariables(c("transcript_id", "geneType", "Fraction", "Number",
 #'
 #' @param object A GRanges object which should contains all the peaks that you
 #'                want to check
-#' @param annotation A path way to the annotation file. The format of the
-#'                   annotation file should be gff3 and downloaded from
-#'                   https://www.gencodegenes.org/
+#' @param annotation A GRanges object with the annotation file.
 #' @param include_intron A logical vector TRUE or FALSE that define whether
 #'                       the intronic region should be included in the position
 #'                       calculation or not.
